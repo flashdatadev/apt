@@ -1,0 +1,128 @@
+name: APT repository
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 1'
+permissions:
+  contents: read
+concurrency:
+  group: apt-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Check package payloads and bilingual documentation
+        run: python3 -m unittest discover -s tests -p 'test_*.py'
+      - name: Reproduce packages and create test-only upgrade fixtures
+        run: python3 scripts/build_packages.py --fixtures fixtures
+      - name: Check with native Debian tools
+        run: |
+          for package in packages/*.deb; do
+            dpkg-deb --info "$package"
+            dpkg-deb --contents "$package"
+          done
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: upgrade-fixtures
+          path: fixtures
+          retention-days: 7
+  sign:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: validate
+    environment: apt-signing
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - run: python3 scripts/build_repository.py
+      - name: Sign the repository in an isolated temporary keyring
+        env:
+          APT_SIGNING_PRIVATE_KEY: ${{ secrets.APT_SIGNING_PRIVATE_KEY }}
+          APT_SIGNING_PASSPHRASE: ${{ secrets.APT_SIGNING_PASSPHRASE }}
+        run: python3 scripts/sign_repository.py
+      - name: Verify both metadata signatures
+        run: |
+          gpgv --keyring "$PWD/dist/flashdata.gpg" dist/dists/stable/InRelease
+          gpgv --keyring "$PWD/dist/flashdata.gpg" dist/dists/stable/Release.gpg dist/dists/stable/Release
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: signed-repository
+          path: dist
+          include-hidden-files: true
+          retention-days: 7
+      - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
+        with:
+          path: dist
+  install-candidate:
+    needs: [validate, sign]
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm]
+        image: ['ubuntu:22.04', 'ubuntu:24.04', 'debian:12', 'debian:13']
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: signed-repository
+          path: dist
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: upgrade-fixtures
+          path: fixtures
+      - name: Test signed installation, upgrades and tamper rejection
+        env:
+          TEST_IMAGE: ${{ matrix.image }}
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist > /tmp/apt-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          docker run --rm --network host -v "$GITHUB_WORKSPACE:/work:ro" "$TEST_IMAGE" bash /work/tests/install_repo.sh http://127.0.0.1:8765 /work/fixtures
+  deploy:
+    needs: [sign, install-candidate]
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy the verified signed repository
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
+  install-public:
+    needs: [validate, deploy]
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm]
+        image: ['ubuntu:22.04', 'ubuntu:24.04', 'debian:12', 'debian:13']
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: upgrade-fixtures
+          path: fixtures
+      - name: Test the published HTTPS repository
+        env:
+          TEST_IMAGE: ${{ matrix.image }}
+        run: docker run --rm -v "$GITHUB_WORKSPACE:/work:ro" "$TEST_IMAGE" bash /work/tests/install_repo.sh https://flashdatadev.github.io/apt /work/fixtures live
