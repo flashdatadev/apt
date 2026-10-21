@@ -33,6 +33,7 @@ Suites: stable
 Components: main
 Architectures: $arch
 Signed-By: /etc/apt/keyrings/flashdata.asc $fingerprint
+By-Hash: force
 EOF
 cat > /etc/apt/preferences.d/flashdata <<'EOF'
 Package: flashdata

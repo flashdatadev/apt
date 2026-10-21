@@ -61,9 +61,10 @@ def main():
             raw = text.encode()
             for name, payload in [("Packages", raw), ("Packages.gz", gz(raw)), ("Packages.xz", lzma.compress(raw, preset=6))]:
                 # Retain all historical index hashes for clients holding an older signed Release.
-                by_hash = folder / "by-hash/SHA256" / sha(payload)
-                by_hash.parent.mkdir(parents=True, exist_ok=True)
-                by_hash.write_bytes(payload)
+                for algorithm in ("sha256", "sha512"):
+                    by_hash = folder / "by-hash" / algorithm.upper() / hashlib.new(algorithm, payload).hexdigest()
+                    by_hash.parent.mkdir(parents=True, exist_ok=True)
+                    by_hash.write_bytes(payload)
                 (folder / name).write_bytes(payload)
         indexes.extend(folder / name for name in ("Packages", "Packages.gz", "Packages.xz"))
     now = dt.datetime.now(dt.timezone.utc).replace(microsecond=0)

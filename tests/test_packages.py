@@ -4,7 +4,9 @@ import json
 import pathlib
 import re
 import sys
+import subprocess
 import tarfile
+import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -46,6 +48,17 @@ class PackageTests(unittest.TestCase):
         self.assertRegex(fingerprint, r'^[0-9A-F]{40}$')
         for name in ('README.md', 'README.zh-CN.md', 'tests/install_repo.sh', 'web/index.html'):
             self.assertIn(fingerprint, (ROOT / name).read_text(encoding='utf-8'))
+
+    def test_every_advertised_hash_has_an_immutable_index(self):
+        with tempfile.TemporaryDirectory(prefix='fd-apt-check-') as folder:
+            subprocess.run([sys.executable, str(ROOT / 'scripts/build_repository.py'), '--output', folder], check=True, capture_output=True)
+            suite = pathlib.Path(folder) / 'dists/stable'
+            for path in suite.glob('main/binary-*/Packages*'):
+                payload = path.read_bytes()
+                for algorithm in ('sha256', 'sha512'):
+                    digest = hashlib.new(algorithm, payload).hexdigest()
+                    immutable = path.parent / 'by-hash' / algorithm.upper() / digest
+                    self.assertEqual(immutable.read_bytes(), payload)
 
 
 if __name__ == '__main__':
