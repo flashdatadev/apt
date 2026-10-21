@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Run only in disposable Ubuntu/Debian containers as root.
 set -euo pipefail
+trap 'echo "APT test failed at line $LINENO" >&2' ERR
 export DEBIAN_FRONTEND=noninteractive
 base_url="${1:?repository URL required}"
 fixtures="${2:?fixture directory required}"
@@ -9,6 +10,17 @@ arch="$(dpkg --print-architecture)"
 fingerprint=19F337AC01C5F5B646A5583A04C7934A11D38FFA
 apt-get update -o APT::Update::Error-Mode=any
 apt-get install -y --no-install-recommends ca-certificates curl gnupg python3
+if [ "$mode" = live ]; then
+  apt-get install -y --no-install-recommends sudo
+  # Execute the exact documented Bash block, including sudo and fingerprint checks.
+  python3 - > /tmp/documented-install.sh <<'PY'
+import pathlib,re
+first=lambda name: re.search(r'```bash\n(.*?)```', pathlib.Path('/work',name).read_text(), re.S).group(1)
+assert first('README.md') == first('README.zh-CN.md')
+print(first('README.md'))
+PY
+  bash /tmp/documented-install.sh
+fi
 curl -fsSL "$base_url/flashdata.asc" -o /tmp/flashdata.asc
 actual="$(gpg --batch --show-keys --with-colons /tmp/flashdata.asc 2>/dev/null | awk -F: '$1 == "fpr" {print $10; exit}')"
 test "$actual" = "$fingerprint"

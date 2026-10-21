@@ -29,6 +29,9 @@ jobs:
             dpkg-deb --info "$package"
             dpkg-deb --contents "$package"
           done
+          for fixture in fixtures/*.deb; do
+            dpkg --compare-versions "$(dpkg-deb -f "$fixture" Version)" lt 1.0.0-1
+          done
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: upgrade-fixtures

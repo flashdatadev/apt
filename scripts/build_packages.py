@@ -193,7 +193,7 @@ def main():
             if not expected and not args.create:
                 raise ValueError("Record the new Debian package SHA-256 in releases.json before publishing")
             if args.fixtures:
-                old = {**release, "debian_version": release["debian_version"] + "~upgrade-test"}
+                old = {**release, "debian_version": release["debian_version"] + "~upgradetest"}
                 data, _ = build(old, arch, source)
                 args.fixtures.mkdir(parents=True, exist_ok=True)
                 (args.fixtures / f"older_{arch}.deb").write_bytes(data)

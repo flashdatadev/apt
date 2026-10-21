@@ -103,7 +103,7 @@ sudo apt-get update
 
 [GitHub Actions](https://github.com/flashdatadev/apt/actions) reproduces both packages from pinned release archives, signs the APT indexes, tests Ubuntu 22.04/24.04 and Debian 12/13 on both architectures before deployment, and repeats installation/upgrade checks against the published HTTPS repository. Tests cover reinstall/removal, preservation of user state, and rejection of unrelated keys, changed signatures and modified package bytes.
 
-This is the first APT release. Upgrade checks use an older **test-only packaging revision** (`1.0.0-1~upgrade-test`) containing the same CLI executable, then upgrade through APT to `1.0.0-1`. The test fixture is never indexed or published in the APT repository; it does not represent an earlier CLI release.
+This is the first APT release. Upgrade checks use an older **test-only packaging revision** (`1.0.0-1~upgradetest`) containing the same CLI executable, then upgrade through APT to `1.0.0-1`. The test fixture is never indexed or published in the APT repository; it does not represent an earlier CLI release.
 
 Signed metadata expires after 30 days. The publishing workflow refreshes it weekly and supports manual runs; the workflow refuses a signing key expiring within 30 days. See [maintainer instructions](docs/maintaining.md) and [signing/security](SECURITY.md). Package updates require a new Debian version; existing versioned packages and upstream tags must remain unchanged.
 
