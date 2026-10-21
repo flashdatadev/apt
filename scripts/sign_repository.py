@@ -25,7 +25,8 @@ def main():
     secret = os.environ.pop("APT_SIGNING_PRIVATE_KEY")
     password = os.environ.pop("APT_SIGNING_PASSPHRASE")
     fingerprint = (ROOT / "keys/fingerprint.txt").read_text().strip()
-    home = pathlib.Path(tempfile.mkdtemp(prefix="fd-apt-"))
+    temporary_root = pathlib.Path(tempfile.gettempdir()).resolve()
+    home = pathlib.Path(tempfile.mkdtemp(prefix="fd-apt-", dir=temporary_root)).resolve()
     home.chmod(0o700)
 
     def gpg(*options, data=None):
@@ -59,6 +60,8 @@ def main():
     finally:
         gpgconf = str(pathlib.Path(args.gpg).with_name("gpgconf.exe")) if os.name == "nt" else "gpgconf"
         subprocess.run([gpgconf, "--homedir", gpg_path(home), "--kill", "all"], capture_output=True)
+        if home.parent != temporary_root or not home.name.startswith("fd-apt-"):
+            raise RuntimeError("Refusing cleanup outside the generated signing directory")
         shutil.rmtree(home)
 
 
