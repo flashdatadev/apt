@@ -4,7 +4,7 @@
 
 The official signed APT repository for the open-source FlashData CLI. [FlashData](https://flashdata.dev) provides structured Google Search and YouTube data. The CLI adds secure credential profiles, background jobs, bulk exports and durable run recovery.
 
-Packages support **Ubuntu 22.04/24.04 and Debian 12/13**, on **amd64 and arm64**. Package `flashdata` **1.0.0-1** contains the unchanged CLI **1.0.0** executable. The suffix `-1` is the Debian packaging revision. No Go, Python or Node.js runtime is required.
+Packages support **Ubuntu 22.04/24.04 and Debian 12/13**, on **amd64 and arm64**. Package `flashdata` **1.0.1-1** contains the unchanged CLI **1.0.1** executable. The suffix `-1` is the Debian packaging revision. No Go, Python or Node.js runtime is required.
 
 ## Install
 
@@ -84,7 +84,7 @@ ls /usr/share/doc/flashdata/docs
 man flashdata
 ```
 
-Examples, English/Chinese release docs, build provenance and third-party license notices are included. These are the v1.0.0 release documentation snapshot; current installation instructions are in this repository and the CLI repository.
+Examples, English/Chinese release docs, build provenance and third-party license notices are included. These are the v1.0.1 release documentation snapshot; current installation instructions are in this repository and the CLI repository.
 
 ```bash
 sudo apt-get remove flashdata
@@ -103,7 +103,7 @@ sudo apt-get update
 
 [GitHub Actions](https://github.com/flashdatadev/apt/actions) reproduces both packages from pinned release archives, signs the APT indexes, tests Ubuntu 22.04/24.04 and Debian 12/13 on both architectures before deployment, and repeats installation/upgrade checks against the published HTTPS repository. Tests cover reinstall/removal, preservation of user state, and rejection of unrelated keys, changed signatures and modified package bytes.
 
-This is the first APT release. Upgrade checks use an older **test-only packaging revision** (`1.0.0-1~upgradetest`) containing the same CLI executable, then upgrade through APT to `1.0.0-1`. The test fixture is never indexed or published in the APT repository; it does not represent an earlier CLI release.
+Upgrade checks install the actual previous **1.0.0-1** package and upgrade through APT to **1.0.1-1**, verifying the new executable hash and preserved user state. An additional test-only packaging revision (`1.0.1-1~upgradetest`) checks packaging upgrades; it is never publicly indexed. Both original 1.0.0 packages remain available unchanged.
 
 Signed metadata expires after 30 days. The publishing workflow refreshes it weekly and supports manual runs; the workflow refuses a signing key expiring within 30 days. See [maintainer instructions](docs/maintaining.md) and [signing/security](SECURITY.md). Package updates require a new Debian version; existing versioned packages and upstream tags must remain unchanged.
 

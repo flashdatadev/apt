@@ -10,6 +10,8 @@ arch="$(dpkg --print-architecture)"
 fingerprint=19F337AC01C5F5B646A5583A04C7934A11D38FFA
 apt-get update -o APT::Update::Error-Mode=any
 apt-get install -y --no-install-recommends ca-certificates curl gnupg python3
+version="$(python3 -c "import json;print(json.load(open('/work/releases.json'))['releases'][-1]['upstream_version'])")"
+package_version="$(python3 -c "import json;print(json.load(open('/work/releases.json'))['releases'][-1]['debian_version'])")"
 if [ "$mode" = live ]; then
   apt-get install -y --no-install-recommends sudo
   # Execute the exact documented Bash block, including sudo and fingerprint checks.
@@ -47,34 +49,50 @@ EOF
 apt-get update -o APT::Update::Error-Mode=any
 apt-cache policy flashdata
 apt-get install -y flashdata
-test "$(dpkg-query -W -f='${Version}' flashdata)" = 1.0.0-1
+test "$(dpkg-query -W -f='${Version}' flashdata)" = "$package_version"
 flashdata --version --json | tee /tmp/flashdata-version.json
 python3 - <<'PY'
 import json
 v=json.load(open('/tmp/flashdata-version.json'))
-assert v['ok'] and v['data']['version']=='1.0.0'
-assert v['data']['commit']=='e9f7a2f7b0cd62e74fc2c79b8c0f64273adbe2dc'
+m=json.load(open('/work/releases.json'))['releases'][-1]
+assert v['ok'] and v['data']=={'version':m['upstream_version'],'commit':m['source_commit']}
 PY
 flashdata --help
+flashdata discover plans --help
+flashdata discover status --help
 flashdata commands --json | python3 -c 'import json,sys; d=json.load(sys.stdin); assert {"auth","bulk","query","runs"} <= {c["name"] for c in d["data"]["commands"]}'
 test -s /usr/share/doc/flashdata/README.zh-CN.md
 test -s /usr/share/doc/flashdata/examples/query.json
 test -s /usr/share/man/man1/flashdata.1.gz
 dpkg -V flashdata
-install -d -m 0700 "$HOME/.config/flashdata"
-printf 'preserve profiles and run history\n' > "$HOME/.config/flashdata/package-test-marker"
-chmod 0600 "$HOME/.config/flashdata/package-test-marker"
+install -d -m 0700 "$HOME/.local/state/flashdata"
+printf 'preserve profiles and run history\n' > "$HOME/.local/state/flashdata/package-test-marker"
+chmod 0600 "$HOME/.local/state/flashdata/package-test-marker"
+python3 /work/tests/upgrade_state.py prepare "$HOME/.local/state/flashdata"
 apt-get install -y --reinstall flashdata
-test -s "$HOME/.config/flashdata/package-test-marker"
+test -s "$HOME/.local/state/flashdata/package-test-marker"
 apt-get remove -y flashdata
 test ! -e /usr/bin/flashdata
-test -s "$HOME/.config/flashdata/package-test-marker"
-dpkg -i "$fixtures/older_${arch}.deb"
-dpkg --compare-versions "$(dpkg-query -W -f='${Version}' flashdata)" lt 1.0.0-1
+test -s "$HOME/.local/state/flashdata/package-test-marker"
+# Exercise a real previous public release, not only a packaging fixture.
+previous="$(python3 -c "import json;print(json.load(open('/work/releases.json'))['releases'][-2]['debian_version'])")"
+dpkg -i "/work/packages/flashdata_${previous}_${arch}.deb"
+test "$(dpkg-query -W -f='${Version}' flashdata)" = "$previous"
+flashdata --version
+python3 /work/tests/upgrade_state.py check "$HOME/.local/state/flashdata"
 apt-get install -y --only-upgrade flashdata
-test "$(dpkg-query -W -f='${Version}' flashdata)" = 1.0.0-1
-test -s "$HOME/.config/flashdata/package-test-marker"
+test "$(dpkg-query -W -f='${Version}' flashdata)" = "$package_version"
+test -s "$HOME/.local/state/flashdata/package-test-marker"
 dpkg -V flashdata
+python3 /work/tests/upgrade_state.py check "$HOME/.local/state/flashdata"
+apt-get remove -y flashdata
+dpkg -i "$fixtures/older_${arch}.deb"
+dpkg --compare-versions "$(dpkg-query -W -f='${Version}' flashdata)" lt "$package_version"
+apt-get install -y --only-upgrade flashdata
+test "$(dpkg-query -W -f='${Version}' flashdata)" = "$package_version"
+test -s "$HOME/.local/state/flashdata/package-test-marker"
+dpkg -V flashdata
+python3 /work/tests/upgrade_state.py check "$HOME/.local/state/flashdata"
 python3 - "$arch" <<'PY'
 import hashlib,json,sys
 m=json.load(open('/work/releases.json'))['releases'][-1]
@@ -82,7 +100,7 @@ assert hashlib.sha256(open('/usr/bin/flashdata','rb').read()).hexdigest()==m['ex
 PY
 apt-get purge -y flashdata
 test ! -e /usr/bin/flashdata
-test -s "$HOME/.config/flashdata/package-test-marker"
+test -s "$HOME/.local/state/flashdata/package-test-marker"
 
 if [ "$mode" = candidate ]; then
   # An unrelated signing key must not authorize this repository.
@@ -118,7 +136,7 @@ EOF
   grep -Ei 'BADSIG|Bad signature|signature|signed' /tmp/bad-signature.log
   # Signed indexes must also protect the package bytes.
   cp /work/dist/dists/stable/InRelease /tmp/tampered/dists/stable/InRelease
-  printf 'tamper' >> "/tmp/tampered/pool/main/f/flashdata/flashdata_1.0.0-1_${arch}.deb"
+  printf 'tamper' >> "/tmp/tampered/pool/main/f/flashdata/flashdata_${package_version}_${arch}.deb"
   apt-get "${negative_options[@]}" update
   mkdir /tmp/tampered-download
   if (cd /tmp/tampered-download && apt-get "${negative_options[@]}" download flashdata) > /tmp/bad-package.log 2>&1; then

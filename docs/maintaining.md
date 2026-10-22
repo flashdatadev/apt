@@ -12,7 +12,7 @@ The repository is served at https://flashdatadev.github.io/apt/ using GitHub Pag
 4. Run `python3 -m unittest discover -s tests -p 'test_*.py'` and `python3 scripts/build_packages.py`. Update the test version assertions when intentionally releasing a new package. Review Ubuntu/Debian and architecture support before adding dependencies.
 5. Push the reviewed change to main. The workflow validates reproducibility, signs metadata, tests the candidate in eight native-architecture Ubuntu/Debian containers, deploys through GitHub Pages, then tests the public HTTPS endpoint in the same matrix. Check every job before announcing the release.
 
-APT packaging tests intentionally use an older local packaging fixture with the same executable; no fabricated upstream release is published. The fixture is a short-lived CI artifact and never appears in the public APT indexes.
+For v1.0.1, all eight candidate and eight public containers install the actual **1.0.0-1** package, upgrade through APT to **1.0.1-1**, verify package/executable integrity and retain user state. Tests also use an older local packaging fixture with the same current executable; it is a short-lived CI artifact and never appears in public APT indexes. Current/previous versions are read from the append-only ledger.
 
 ## Metadata freshness
 

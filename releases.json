@@ -17,6 +17,24 @@
         "amd64": "b62d316fefc64edfacda2a3b7ca660472c0f03c2c0d1d590886eb2a48fe531b7",
         "arm64": "e21fac7f2ecb2a7f1351fd4701ba08312ea1558f7174d51210ec22dba2465745"
       }
+    },
+    {
+      "upstream_version": "1.0.1",
+      "debian_version": "1.0.1-1",
+      "source_commit": "dce1b7e6a0dcaeb44f2d5166da71778c59083269",
+      "source_date_epoch": 1792665424,
+      "archives": {
+        "amd64": "58547fd48ebec06f028ca1f496615c5550b299048b02cbcab5bc0331652ec369",
+        "arm64": "a3215f7a0dfa979e6e8ee1defcbeb884b43948c35cd21bbde745c358f6671bb6"
+      },
+      "executables": {
+        "amd64": "0caab292e3028d5bb78f59ef4176b6467d64942c742fe6b39bc59e5c3e9c609b",
+        "arm64": "5c07e8c4f630546d6b81eafc43ad57ff63584a25196ffe53709b7b2c23d9b65d"
+      },
+      "packages": {
+        "amd64": "f9c0029981f955eb7592f485dfe987f00531bcde89c693875079d13dec3daa65",
+        "arm64": "b94953d010b7a7dc1b91dbb5fdf027a8a6cb26fdeea7a9a1d06361f84bbbf2d2"
+      }
     }
   ]
 }

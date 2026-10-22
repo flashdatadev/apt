@@ -96,7 +96,7 @@ def upstream(release, arch):
             files[member.name] = archive.extractfile(member).read()
     binary = files["flashdata"]
     if sha(binary) != release["executables"][arch]:
-        raise ValueError("Executable differs from verified v1.0.0 release")
+        raise ValueError("Executable differs from the verified upstream release")
     if binary[:6] != b"\x7fELF\x02\x01" or struct.unpack_from("<H", binary, 18)[0] != {"amd64": 62, "arm64": 183}[arch]:
         raise ValueError("Executable architecture mismatch")
     return files
