@@ -4,7 +4,7 @@
 
 开源 FlashData CLI 的官方签名 APT 软件源。[FlashData](https://flashdata.dev) 提供结构化 Google 搜索和 YouTube 数据；CLI 支持安全的凭据配置、后台任务、批量导出及持久化执行恢复。
 
-支持 **Ubuntu 22.04/24.04、Debian 12/13**，架构为 **amd64 和 arm64**。`flashdata` 软件包 **1.1.2-1** 包含未经修改的 CLI **1.1.2** 可执行文件；`-1` 是 Debian 打包修订号。无需安装 Go、Python 或 Node.js 运行时。
+支持 **Ubuntu 22.04/24.04、Debian 12/13**，架构为 **amd64 和 arm64**。`flashdata` 软件包 **1.2.0-1** 包含未经修改的 CLI **1.2.0** 可执行文件；`-1` 是 Debian 打包修订号。无需安装 Go、Python 或 Node.js 运行时。
 
 ## 安装
 
@@ -51,11 +51,13 @@ EOF
 
 软件源地址为 `https://flashdatadev.github.io/apt/`，发行套件为 `stable`，组件为 `main`。专用签名证书指纹为 **`19F337AC01C5F5B646A5583A04C7934A11D38FFA`**，身份是 `FlashData APT Signing <support@flashdata.dev>`。[公钥](keys/flashdata.asc)和[指纹](keys/fingerprint.txt)也记录在本源码仓库中。请勿禁用签名验证，也不要将此公钥导入 APT 全局信任密钥环。
 
-从 [FlashData 账户](https://flashdata.dev) 获取 API 密钥，然后使用终端隐藏输入导入：
+安装后，设置 agent：
 
 ```bash
-flashdata auth login
+flashdata setup
 ```
+
+设置会选择 Codex、Claude Code 或 Cursor，安装随附技能并验证访问，不执行付费查询。技能默认使用纯文本，MCP 可选。使用已有密钥时，设置前运行 `flashdata auth login`。uv 安装方式见 [CLI 设置指南](https://github.com/flashdatadev/flashdata-cli/blob/main/README.zh-CN.md)。
 
 安装及离线版本/帮助检查无需 API 密钥；提交 API 查询和任务按正常 FlashData 规则计费。查询、接入、批量任务及恢复流程参见 [English CLI README](https://github.com/flashdatadev/flashdata-cli#readme) 和[简体中文](https://github.com/flashdatadev/flashdata-cli/blob/main/README.zh-CN.md)。
 
@@ -84,7 +86,7 @@ ls /usr/share/doc/flashdata/docs
 man flashdata
 ```
 
-软件包包含示例、中英文版本文档、构建来源记录及第三方许可证声明。这些文档是 v1.1.2 发布快照；最新安装说明位于本仓库及 CLI 仓库。
+软件包包含示例、中英文版本文档、构建来源记录及第三方许可证声明。这些文档是 v1.2.0 发布快照；最新安装说明位于本仓库及 CLI 仓库。
 
 ```bash
 sudo apt-get remove flashdata
@@ -103,7 +105,7 @@ sudo apt-get update
 
 [GitHub Actions](https://github.com/flashdatadev/apt/actions) 从校验和锁定的发布归档复现两个架构的软件包，签署 APT 索引，在部署前测试 Ubuntu 22.04/24.04 与 Debian 12/13 的两个架构，并在发布后通过真实 HTTPS 软件源重复安装和升级检查。测试包含重新安装、卸载、用户状态保留，以及拒绝错误公钥、篡改签名和被修改的软件包内容。
 
-升级测试从真实旧版 **1.1.1-1** 通过 APT 升级到 **1.1.2-1**，验证新可执行文件哈希并保留用户状态。另用 `1.1.2-1~upgradetest` 专用包验证打包修订升级，该测试包不进入公开索引。原有两个架构的 1.0.0 软件包保持不变并继续提供。
+升级测试从真实旧版 **1.1.2-1** 通过 APT 升级到 **1.2.0-1**，验证新可执行文件哈希并保留用户状态。另用 `1.2.0-1~upgradetest` 专用包验证打包修订升级，该测试包不进入公开索引。原有两个架构的 1.0.0 软件包保持不变并继续提供。
 
 签名元数据有效期为 30 天。发布工作流每周刷新一次，也可手动运行；签名密钥距到期不足 30 天时，工作流会拒绝发布。详见[维护说明](docs/maintaining.md)及[签名与安全](SECURITY.md)。更新软件包必须使用新的 Debian 版本号；已发布版本的软件包及上游标签须保持不变。
 

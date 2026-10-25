@@ -4,7 +4,7 @@
 
 The official signed APT repository for the open-source FlashData CLI. [FlashData](https://flashdata.dev) provides structured Google Search and YouTube data. The CLI adds secure credential profiles, background jobs, bulk exports and durable run recovery.
 
-Packages support **Ubuntu 22.04/24.04 and Debian 12/13**, on **amd64 and arm64**. Package `flashdata` **1.1.2-1** contains the unchanged CLI **1.1.2** executable. The suffix `-1` is the Debian packaging revision. No Go, Python or Node.js runtime is required.
+Packages support **Ubuntu 22.04/24.04 and Debian 12/13**, on **amd64 and arm64**. Package `flashdata` **1.2.0-1** contains the unchanged CLI **1.2.0** executable. The suffix `-1` is the Debian packaging revision. No Go, Python or Node.js runtime is required.
 
 ## Install
 
@@ -51,11 +51,13 @@ EOF
 
 The repository is `https://flashdatadev.github.io/apt/`, suite `stable`, component `main`. Its dedicated signing certificate is **`19F337AC01C5F5B646A5583A04C7934A11D38FFA`**, identified as `FlashData APT Signing <support@flashdata.dev>`. The [public key](keys/flashdata.asc) and [fingerprint](keys/fingerprint.txt) are also recorded in this source repository. Do not disable signature checking or import this key into APT's global trusted keyring.
 
-Get an API key from your [FlashData account](https://flashdata.dev), then import it using hidden terminal input:
+After installation, set up your agent:
 
 ```bash
-flashdata auth login
+flashdata setup
 ```
+
+Setup selects Codex, Claude Code or Cursor, installs bundled skills and verifies access without a paid query. Skills use plain text by default; MCP is optional. To use an existing key, run `flashdata auth login` before setup. For the uv installation option, see the [CLI setup guide](https://github.com/flashdatadev/flashdata-cli#readme).
 
 Installation and offline version/help checks need no API key. Submitted API queries and jobs use normal FlashData billing. See the [English CLI README](https://github.com/flashdatadev/flashdata-cli#readme) and [简体中文](https://github.com/flashdatadev/flashdata-cli/blob/main/README.zh-CN.md) for query, onboarding, bulk and recovery workflows.
 
@@ -84,7 +86,7 @@ ls /usr/share/doc/flashdata/docs
 man flashdata
 ```
 
-Examples, English/Chinese release docs, build provenance and third-party license notices are included. These are the v1.1.2 release documentation snapshot; current installation instructions are in this repository and the CLI repository.
+Examples, English/Chinese release docs, build provenance and third-party license notices are included. These are the v1.2.0 release documentation snapshot; current installation instructions are in this repository and the CLI repository.
 
 ```bash
 sudo apt-get remove flashdata
@@ -103,7 +105,7 @@ sudo apt-get update
 
 [GitHub Actions](https://github.com/flashdatadev/apt/actions) reproduces both packages from pinned release archives, signs the APT indexes, tests Ubuntu 22.04/24.04 and Debian 12/13 on both architectures before deployment, and repeats installation/upgrade checks against the published HTTPS repository. Tests cover reinstall/removal, preservation of user state, and rejection of unrelated keys, changed signatures and modified package bytes.
 
-Upgrade checks install the actual previous **1.1.1-1** package and upgrade through APT to **1.1.2-1**, verifying the new executable hash and preserved user state. An additional test-only packaging revision (`1.1.2-1~upgradetest`) checks packaging upgrades; it is never publicly indexed. Both original 1.0.0 packages remain available unchanged.
+Upgrade checks install the actual previous **1.1.2-1** package and upgrade through APT to **1.2.0-1**, verifying the new executable hash and preserved user state. An additional test-only packaging revision (`1.2.0-1~upgradetest`) checks packaging upgrades; it is never publicly indexed. Both original 1.0.0 packages remain available unchanged.
 
 Signed metadata expires after 30 days. The publishing workflow refreshes it weekly and supports manual runs; the workflow refuses a signing key expiring within 30 days. See [maintainer instructions](docs/maintaining.md) and [signing/security](SECURITY.md). Package updates require a new Debian version; existing versioned packages and upstream tags must remain unchanged.
 
